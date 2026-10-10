@@ -1,0 +1,68 @@
+@startuml
+title Оформление заказа: отказ доставки после оплаты и компенсация (возврат и снятие резерва)
+
+actor "Покупатель" as Client
+participant "API Gateway" as Gateway
+participant "Order Service" as Order
+participant "Inventory Service" as Inventory
+participant "Catalog Service" as Catalog
+participant "Payment Service" as Payment
+participant "Logistics Service" as Logistics
+queue "Kafka\norder-topic" as KafkaOrder
+queue "Kafka\ninventory-topic" as KafkaInventory
+queue "Kafka\npayment-topic" as KafkaPayment
+queue "Kafka\nlogistics-topic" as KafkaLogistics
+database "Order DB" as OrderDb
+participant "Платёжный шлюз" as PaymentGateway
+participant "Логистический провайдер" as LogisticsProvider
+
+Client -> Gateway: POST /api/orders
+Gateway -> Order: создать заказ
+Order -> OrderDb: заказ, статус AWAITING_PAYMENT
+Order -> KafkaOrder: OrderCreated
+Gateway --> Client: заказ создан, перейти к оплате
+
+KafkaOrder -> Inventory: OrderCreated
+Inventory -> Inventory: проверить остатки и создать резерв
+Inventory -> KafkaInventory: InventoryReserved
+
+KafkaInventory -> Payment: InventoryReserved
+Payment -> PaymentGateway: авторизация и списание средств
+PaymentGateway --> Payment: успешный ответ, paymentId
+Payment -> KafkaPayment: PaymentSucceeded
+
+KafkaPayment -> Order: PaymentSucceeded
+Order -> OrderDb: статус PAID
+Order -> KafkaOrder: OrderStatusChanged(PAID)
+Order -> KafkaOrder: DeliveryRequested
+KafkaOrder -> Logistics: DeliveryRequested
+Gateway --> Client: статус «Оплачен и готовится к отправке»
+
+Logistics -> LogisticsProvider: создать заявку на доставку
+LogisticsProvider --> Logistics: таймаут, заявка не создана
+Logistics -> KafkaLogistics: DeliveryFailed
+
+KafkaLogistics -> Order: DeliveryFailed
+Order -> OrderDb: статус DELIVERY_FAILED
+Order -> KafkaOrder: RefundRequested
+
+KafkaOrder -> Payment: RefundRequested
+Payment -> PaymentGateway: возврат средств
+PaymentGateway --> Payment: возврат выполнен
+Payment -> KafkaPayment: RefundSucceeded
+
+KafkaPayment -> Order: RefundSucceeded
+Order -> OrderDb: средства возвращены покупателю
+Order -> KafkaOrder: ReleaseReservationRequested
+
+KafkaOrder -> Inventory: ReleaseReservationRequested
+Inventory -> Inventory: снять резерв, товар снова доступен
+Inventory -> KafkaInventory: ReservationReleased
+
+KafkaInventory -> Order: ReservationReleased
+KafkaInventory -> Catalog: ReservationReleased
+Catalog -> Catalog: вернуть товар в каталог
+Order -> OrderDb: статус CANCELLED, причина DELIVERY_FAILED
+Order -> KafkaOrder: OrderStatusChanged(CANCELLED)
+Gateway --> Client: заказ отменён, средства возвращены
+@enduml

@@ -1,0 +1,69 @@
+@startuml
+title Оформление заказа: успешный сценарий Saga
+
+actor "Покупатель" as Client
+participant "API Gateway" as Gateway
+participant "Order Service" as Order
+participant "Inventory Service" as Inventory
+participant "Catalog Service" as Catalog
+participant "Payment Service" as Payment
+participant "Logistics Service" as Logistics
+participant "Notification Service" as Notification
+participant "Seller Service" as Seller
+queue "Kafka\norder-topic" as KafkaOrder
+queue "Kafka\ninventory-topic" as KafkaInventory
+queue "Kafka\npayment-topic" as KafkaPayment
+queue "Kafka\nlogistics-topic" as KafkaLogistics
+database "Order DB" as OrderDb
+participant "Платёжный шлюз" as PaymentGateway
+participant "Логистический провайдер" as LogisticsProvider
+
+Client -> Gateway: POST /api/orders\nтовары, количество, адрес, доставка, оплата
+Gateway -> Order: создать заказ
+Order -> OrderDb: заказ, статус AWAITING_PAYMENT
+Order -> KafkaOrder: OrderCreated
+Order --> Gateway: 201 Created, orderId, статус «Ожидает оплаты»
+Gateway --> Client: заказ создан, перейти к оплате
+
+KafkaOrder -> Inventory: OrderCreated
+Inventory -> Inventory: проверить остатки и создать резерв
+Inventory -> KafkaInventory: InventoryReserved
+KafkaInventory -> Catalog: InventoryReserved
+Catalog -> Catalog: уменьшить доступное количество в каталоге
+KafkaInventory -> Payment: InventoryReserved
+
+Payment -> PaymentGateway: авторизация и списание средств
+PaymentGateway --> Payment: успешный ответ, paymentId
+
+Payment -> KafkaPayment: PaymentSucceeded
+KafkaPayment -> Order: PaymentSucceeded
+Order -> OrderDb: статус PAID
+Order -> KafkaOrder: OrderStatusChanged(PAID)
+Order -> KafkaOrder: DeliveryRequested
+KafkaOrder -> Logistics: DeliveryRequested
+Order --> Gateway: статус «Оплачен и готовится к отправке»
+Gateway --> Client: статус заказа
+
+KafkaPayment -> Seller: PaymentSucceeded
+Seller -> Seller: показать заказ в кабинете продавца
+KafkaPayment -> Notification: PaymentSucceeded
+Notification -> Notification: отправить уведомление продавцу
+Notification -> KafkaOrder: NotificationSent
+
+Logistics -> LogisticsProvider: создать заявку на доставку
+LogisticsProvider --> Logistics: trackingId, дата доставки
+Logistics -> KafkaLogistics: DeliveryRegistered
+KafkaLogistics -> Order: DeliveryRegistered
+Order -> OrderDb: трек-номер, статус HANDED_TO_DELIVERY
+Order -> KafkaOrder: OrderStatusChanged(HANDED_TO_DELIVERY)
+Gateway --> Client: статус «Передан в доставку», трек-номер
+
+LogisticsProvider -> Logistics: вебхук «заказ доставлен»
+Logistics -> KafkaLogistics: DeliveryCompleted
+KafkaLogistics -> Order: DeliveryCompleted
+Order -> OrderDb: статус DELIVERED
+Order -> KafkaOrder: OrderStatusChanged(DELIVERED)
+KafkaLogistics -> Inventory: DeliveryCompleted
+Inventory -> Inventory: списать резерв в продажу
+Gateway --> Client: статус «Доставлен»
+@enduml
