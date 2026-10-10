@@ -1,0 +1,4 @@
+[2026-10-11 00:12:18,809] devvm/INFO/locust.main: Starting Locust 2.46.6
+[2026-10-11 00:12:18,810] devvm/INFO/locust.main: Starting web interface at http://0.0.0.0:8082, press enter to open your default browser.
+[2026-10-11 00:13:45,767] devvm/INFO/locust.runners: Ramping to 12 users at a rate of 6.00 per second
+[2026-10-11 00:13:46,768] devvm/INFO/locust.runners: All users spawned: {"LoadOnHealthyBackend": 7, "LoadOnTimedOutBackend": 5} (12 total users)
