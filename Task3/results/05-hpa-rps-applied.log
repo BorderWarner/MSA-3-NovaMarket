@@ -1,0 +1,2 @@
+NAME           REFERENCE                 TARGETS     MINPODS   MAXPODS   REPLICAS   AGE
+scaletestapp   Deployment/scaletestapp   43054m/20   1         10        1          0s

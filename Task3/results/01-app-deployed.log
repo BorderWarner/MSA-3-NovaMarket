@@ -1,0 +1,9 @@
+NAME                           READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS     IMAGES                                         SELECTOR
+deployment.apps/scaletestapp   1/1     1            1           2m32s   scaletestapp   ghcr.io/yandex-practicum/scaletestapp:latest   app=scaletestapp
+
+NAME                   TYPE       CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE     SELECTOR
+service/scaletestapp   NodePort   10.104.198.156   <none>        8080:30080/TCP   2m32s   app=scaletestapp
+
+NAME                                READY   STATUS    RESTARTS   AGE     IP           NODE       NOMINATED NODE   READINESS GATES
+pod/scaletestapp-6c65999f69-f5rbr   1/1     Running   0          2m32s   10.244.0.6   minikube   <none>           <none>
+192.168.49.2

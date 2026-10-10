@@ -1,0 +1,28 @@
+@startuml
+title Оформление заказа: отказ резервирования товара на складе
+
+actor "Покупатель" as Client
+participant "API Gateway" as Gateway
+participant "Order Service" as Order
+participant "Inventory Service" as Inventory
+queue "Kafka\norder-topic" as KafkaOrder
+queue "Kafka\ninventory-topic" as KafkaInventory
+database "Order DB" as OrderDb
+
+Client -> Gateway: POST /api/orders\nтовары, количество, адрес, доставка, оплата
+Gateway -> Order: создать заказ
+Order -> OrderDb: заказ, статус AWAITING_PAYMENT
+Order -> KafkaOrder: OrderCreated
+Order --> Gateway: 201 Created, orderId, статус «Ожидает оплаты»
+Gateway --> Client: заказ создан, перейти к оплате
+
+KafkaOrder -> Inventory: OrderCreated
+Inventory -> Inventory: проверить остатки по складам продавцов
+Inventory -> Inventory: товара недостаточно,\nрезерв не создан
+Inventory -> KafkaInventory: InventoryReservationFailed
+
+KafkaInventory -> Order: InventoryReservationFailed
+Order -> OrderDb: статус CANCELLED, причина OUT_OF_STOCK
+Order -> KafkaOrder: OrderStatusChanged(CANCELLED)
+Gateway --> Client: заказ отменён, товара нет в наличии
+@enduml

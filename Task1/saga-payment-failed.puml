@@ -1,0 +1,47 @@
+@startuml
+title Оформление заказа: отказ оплаты и компенсация (снятие резерва)
+
+actor "Покупатель" as Client
+participant "API Gateway" as Gateway
+participant "Order Service" as Order
+participant "Inventory Service" as Inventory
+participant "Payment Service" as Payment
+participant "Catalog Service" as Catalog
+queue "Kafka\norder-topic" as KafkaOrder
+queue "Kafka\ninventory-topic" as KafkaInventory
+queue "Kafka\npayment-topic" as KafkaPayment
+database "Order DB" as OrderDb
+participant "Платёжный шлюз" as PaymentGateway
+
+Client -> Gateway: POST /api/orders
+Gateway -> Order: создать заказ
+Order -> OrderDb: заказ, статус AWAITING_PAYMENT
+Order -> KafkaOrder: OrderCreated
+Gateway --> Client: заказ создан, перейти к оплате
+
+KafkaOrder -> Inventory: OrderCreated
+Inventory -> Inventory: проверить остатки и создать резерв
+Inventory -> KafkaInventory: InventoryReserved
+
+KafkaInventory -> Payment: InventoryReserved
+Payment -> PaymentGateway: авторизация и списание средств
+PaymentGateway --> Payment: отказ, недостаток средств
+Payment -> KafkaPayment: PaymentFailed
+Payment --> Gateway: платёж не прошёл
+Gateway --> Client: вернуть на страницу оплаты
+
+KafkaPayment -> Order: PaymentFailed
+Order -> OrderDb: статус PAYMENT_FAILED
+Order -> KafkaOrder: ReleaseReservationRequested
+
+KafkaOrder -> Inventory: ReleaseReservationRequested
+Inventory -> Inventory: снять резерв, товар снова доступен
+Inventory -> KafkaInventory: ReservationReleased
+
+KafkaInventory -> Order: ReservationReleased
+Order -> OrderDb: статус CANCELLED, причина PAYMENT_FAILED
+Order -> KafkaOrder: OrderStatusChanged(CANCELLED)
+KafkaInventory -> Catalog: ReservationReleased
+Catalog -> Catalog: вернуть товар в каталог
+Gateway --> Client: заказ отменён, оплата не списана
+@enduml

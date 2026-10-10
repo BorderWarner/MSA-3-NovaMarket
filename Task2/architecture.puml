@@ -1,0 +1,85 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_WITH_LEGEND()
+
+title NovaMarket после реализации сценария «Просмотр истории покупок»
+
+Person(customer, "Покупатель", "Смотрит каталог, оформляет заказ, изучает историю покупок")
+Person(seller, "Продавец", "Размещает товары, обрабатывает заказы, получает уведомления")
+
+System_Ext(mobile, "Мобильное приложение NovaMarket", "Android, Kotlin", "Единственный клиентский канал MVP")
+
+System_Boundary(marketplace, "NovaMarket") {
+  Container(gateway, "API Gateway", "NGINX", "Маршрутизация клиентских запросов, авторизация, лимиты запросов по каналам")
+
+  Container(catalog, "Catalog Service", "Java, Spring Boot", "Каталог товаров, карточка товара, отзывы покупателей, остатки для повторного заказа")
+  Container(order, "Order Service", "Java, Spring Boot", "Команды: корзина, создание и отмена заказа, статусы. Источник событий OrderCreated, OrderStatusChanged")
+  Container(inventory, "Inventory Service", "Java, Spring Boot", "Остатки на складах продавцов, проверка наличия, резервирование и снятие резерва")
+  Container(payment, "Payment Service", "Java, Spring Boot", "Оплата заказа, привязка карт, возвраты, данные для чека")
+  Container(logistics, "Logistics Service", "Java, Spring Boot", "Заявка на доставку, способ доставки, трек-номер и статус доставки")
+  Container(sellerSvc, "Seller Service", "Java, Spring Boot", "Кабинет продавца: товары, заказы продавца, статусы отправки")
+  Container(notification, "Notification Service", "Java, Spring Boot", "Уведомления продавцам о новом заказе и об отмене")
+
+  Container(history, "Order History Service", "Java, Spring Boot, Kafka Streams", "Проекция чтения: строит и обновляет историю заказов покупателя по событиям, отдаёт готовые данные для интерфейса")
+  Container(bff, "History BFF", "Java, Spring Boot", "API Composition: собирает ответ для истории заказов из проекции, каталога и Order Service, скрывает внутренние API от клиента")
+
+  ContainerQueue(kafka, "Event Bus", "Apache Kafka", "Транспорт событий между сервисами: топики по доменам, повторная доставка, подписка новых потребителей")
+
+  ContainerDb(catalogDb, "Catalog DB", "PostgreSQL", "Товары, категории, цены, отзывы")
+  ContainerDb(orderDb, "Order DB", "PostgreSQL", "Корзины, заказы, позиции заказа, статусы")
+  ContainerDb(inventoryDb, "Inventory DB", "PostgreSQL", "Остатки и резервы по складам продавцов")
+  ContainerDb(paymentDb, "Payment DB", "PostgreSQL", "Платежи, привязанные карты, возвраты")
+  ContainerDb(logisticsDb, "Logistics DB", "PostgreSQL", "Заявки на доставку, трек-номера")
+  ContainerDb(sellerDb, "Seller DB", "PostgreSQL", "Продавцы, их товары и заказы")
+  ContainerDb(notificationDb, "Notification DB", "PostgreSQL", "Шаблоны и журнал уведомлений")
+  ContainerDb(historyDb, "Order History DB", "PostgreSQL", "Денормализованная проекция: заказы покупателя, позиции, суммы, способы оплаты и доставки, финальный статус, трек-номер")
+}
+
+System_Ext(paymentGateway, "Платёжный шлюз", "Внешний провайдер", "Приём оплаты картой, автосписание привязанной карты, возврат")
+System_Ext(logisticsProvider, "Логистический провайдер", "Внешний провайдер", "Создание заявки на доставку, трек-номер, вебхуки статусов")
+
+Rel(customer, mobile, "Покупает товары, смотрит историю заказов", "HTTPS")
+Rel(seller, mobile, "Управляет товарами и заказами", "HTTPS")
+
+Rel(mobile, gateway, "REST/JSON: каталог, корзина, заказ, оплата, статусы, история заказов, кабинет продавца", "HTTPS")
+
+Rel(gateway, catalog, "Запросы каталога, карточки товара, отзывов и оценок", "REST/JSON")
+Rel(gateway, order, "Команды: корзина, оформление, повторный заказ, отмена", "REST/JSON")
+Rel(gateway, bff, "Запросы истории заказов: список, карточка, чек, отзыв, повторный заказ", "REST/JSON")
+Rel(gateway, payment, "Запросы оплаты и привязки карты", "REST/JSON")
+Rel(gateway, logistics, "Запросы способа доставки и трек-номера", "REST/JSON")
+Rel(gateway, sellerSvc, "Запросы кабинета продавца", "REST/JSON")
+
+Rel(bff, history, "GET /api/orders, GET /api/orders/{id}: список и карточка заказа из проекции", "REST/JSON")
+Rel(bff, catalog, "GET /api/products/{id}, POST /api/reviews: данные товара, отзыв о товаре", "REST/JSON")
+Rel(bff, order, "POST /api/orders/repeat: повторный заказ", "REST/JSON")
+
+Rel(catalog, catalogDb, "Чтение и запись", "SQL")
+Rel(order, orderDb, "Чтение и запись", "SQL")
+Rel(inventory, inventoryDb, "Чтение и запись", "SQL")
+Rel(payment, paymentDb, "Чтение и запись", "SQL")
+Rel(logistics, logisticsDb, "Чтение и запись", "SQL")
+Rel(sellerSvc, sellerDb, "Чтение и запись", "SQL")
+Rel(notification, notificationDb, "Чтение и запись", "SQL")
+Rel(history, historyDb, "Чтение и запись проекции", "SQL")
+
+Rel(payment, paymentGateway, "Авторизация, списание, возврат", "HTTPS")
+Rel(logistics, logisticsProvider, "Создание заявки, отмена, статус доставки", "HTTPS")
+
+Rel(order, kafka, "OrderCreated\nOrderStatusChanged\nDeliveryRequested\nReleaseReservationRequested\nRefundRequested", "Публикует")
+Rel(inventory, kafka, "InventoryReserved\nInventoryReservationFailed\nReservationReleased", "Публикует")
+Rel(payment, kafka, "PaymentSucceeded\nPaymentFailed\nRefundSucceeded", "Публикует")
+Rel(logistics, kafka, "DeliveryRegistered\nDeliveryFailed\nDeliveryCompleted", "Публикует")
+Rel(notification, kafka, "NotificationSent", "Публикует")
+
+Rel(kafka, inventory, "OrderCreated\nReleaseReservationRequested\nDeliveryCompleted", "Подписан")
+Rel(kafka, payment, "InventoryReserved\nRefundRequested", "Подписан")
+Rel(kafka, order, "InventoryReserved\nInventoryReservationFailed\nPaymentSucceeded\nPaymentFailed\nReservationReleased\nRefundSucceeded\nDeliveryRegistered\nDeliveryFailed\nDeliveryCompleted", "Подписан")
+Rel(kafka, logistics, "DeliveryRequested", "Подписан")
+Rel(kafka, sellerSvc, "PaymentSucceeded\nOrderStatusChanged", "Подписан")
+Rel(kafka, notification, "PaymentSucceeded\nOrderStatusChanged", "Подписан")
+Rel(kafka, catalog, "InventoryReserved\nReservationReleased", "Подписан")
+
+Rel(kafka, history, "OrderCreated\nOrderStatusChanged\nPaymentSucceeded\nPaymentFailed\nRefundSucceeded\nDeliveryRegistered\nDeliveryFailed\nDeliveryCompleted\nReservationReleased", "Подписан, проекция чтения")
+@enduml

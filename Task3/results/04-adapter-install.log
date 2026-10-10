@@ -1,0 +1,15 @@
+apiservice.apiregistration.k8s.io/v1beta1.custom.metrics.k8s.io created
+configmap/prometheus-adapter-config created
+deployment.apps/prometheus-adapter created
+serviceaccount/prometheus-adapter created
+clusterrole.rbac.authorization.k8s.io/prometheus-adapter created
+clusterrolebinding.rbac.authorization.k8s.io/prometheus-adapter created
+role.rbac.authorization.k8s.io/prometheus-adapter created
+rolebinding.rbac.authorization.k8s.io/prometheus-adapter created
+role.rbac.authorization.k8s.io/prometheus-adapter created
+rolebinding.rbac.authorization.k8s.io/prometheus-adapter created
+service/prometheus-adapter created
+Waiting for deployment "prometheus-adapter" rollout to finish: 0 of 1 updated replicas are available...
+deployment "prometheus-adapter" successfully rolled out
+NAME                            SERVICE                         AVAILABLE   AGE
+v1beta1.custom.metrics.k8s.io   monitoring/prometheus-adapter   True        87s
