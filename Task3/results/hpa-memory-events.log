@@ -1,0 +1,11 @@
+Events:
+  Type     Reason                        Age                From                       Message
+  ----     ------                        ----               ----                       -------
+  Warning  FailedGetResourceMetric       17m (x2 over 17m)  horizontal-pod-autoscaler  failed to get memory utilization: unable to get metrics for resource memory: unable to fetch metrics from resource metrics API: the server is currently unable to handle the request (get pods.metrics.k8s.io)
+  Warning  FailedComputeMetricsReplicas  17m (x2 over 17m)  horizontal-pod-autoscaler  invalid metrics (1 invalid out of 1), first error is: failed to get memory resource metric value: failed to get memory utilization: unable to get metrics for resource memory: unable to fetch metrics from resource metrics API: the server is currently unable to handle the request (get pods.metrics.k8s.io)
+  Normal   SuccessfulRescale             2m13s              horizontal-pod-autoscaler  New size: 2; reason: memory resource utilization (percentage of request) above target
+NAME           REFERENCE                 TARGETS           MINPODS   MAXPODS   REPLICAS   AGE
+scaletestapp   Deployment/scaletestapp   memory: 56%/80%   1         10        2          17m
+NAME                            CPU(cores)   MEMORY(bytes)   
+scaletestapp-6c65999f69-f4w69   8m           5Mi             
+scaletestapp-6c65999f69-f5rbr   102m         28Mi            

@@ -1,0 +1,19 @@
+NAME           REFERENCE                 TARGETS          MINPODS   MAXPODS   REPLICAS   AGE
+scaletestapp   Deployment/scaletestapp   memory: 4%/80%   1         10        1          41s
+scaletestapp   Deployment/scaletestapp   memory: 10%/80%   1         10        1          2m15s
+scaletestapp   Deployment/scaletestapp   memory: 22%/80%   1         10        1          3m15s
+scaletestapp   Deployment/scaletestapp   memory: 28%/80%   1         10        1          4m15s
+scaletestapp   Deployment/scaletestapp   memory: 34%/80%   1         10        1          5m15s
+scaletestapp   Deployment/scaletestapp   memory: 40%/80%   1         10        1          6m16s
+scaletestapp   Deployment/scaletestapp   memory: 47%/80%   1         10        1          7m16s
+scaletestapp   Deployment/scaletestapp   memory: 56%/80%   1         10        1          8m16s
+scaletestapp   Deployment/scaletestapp   memory: 61%/80%   1         10        1          9m16s
+scaletestapp   Deployment/scaletestapp   memory: 67%/80%   1         10        1          10m
+scaletestapp   Deployment/scaletestapp   memory: 70%/80%   1         10        1          11m
+scaletestapp   Deployment/scaletestapp   memory: 79%/80%   1         10        1          12m
+scaletestapp   Deployment/scaletestapp   memory: 83%/80%   1         10        1          13m
+scaletestapp   Deployment/scaletestapp   memory: 85%/80%   1         10        1          14m
+scaletestapp   Deployment/scaletestapp   memory: 91%/80%   1         10        1          15m
+scaletestapp   Deployment/scaletestapp   memory: 91%/80%   1         10        2          15m
+scaletestapp   Deployment/scaletestapp   memory: 51%/80%   1         10        2          16m
+scaletestapp   Deployment/scaletestapp   memory: 56%/80%   1         10        2          17m

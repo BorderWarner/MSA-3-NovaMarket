@@ -1,0 +1,9 @@
+Events:
+  Type    Reason             Age   From                       Message
+  ----    ------             ----  ----                       -------
+  Normal  SuccessfulRescale  107s  horizontal-pod-autoscaler  New size: 3; reason: pods metric requests_per_second above target
+  Normal  SuccessfulRescale  47s   horizontal-pod-autoscaler  New size: 5; reason: pods metric requests_per_second above target
+  Normal  SuccessfulRescale  32s   horizontal-pod-autoscaler  New size: 7; reason: pods metric requests_per_second above target
+NAME           REFERENCE                 TARGETS     MINPODS   MAXPODS   REPLICAS   AGE
+scaletestapp   Deployment/scaletestapp   19085m/20   1         10        7          108s
+7

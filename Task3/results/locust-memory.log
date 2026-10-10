@@ -1,0 +1,9 @@
+[2026-10-10 21:38:45,531] devvm/INFO/locust.main: Starting Locust 2.46.6
+[2026-10-10 21:38:45,531] devvm/INFO/locust.main: Starting web interface at http://0.0.0.0:8089, press enter to open your default browser.
+[2026-10-10 21:39:33,381] devvm/INFO/locust.runners: Ramping to 500 users at a rate of 1.00 per second
+[2026-10-10 21:47:42,908] devvm/INFO/locust.runners: Ramping to 600 users at a rate of 1.00 per second
+[2026-10-10 21:49:31,999] devvm/INFO/locust.runners: All users spawned: {"WebsiteUser": 600} (600 total users)
+[2026-10-10 21:50:05,841] devvm/INFO/locust.runners: Ramping to 700 users at a rate of 1.00 per second
+[2026-10-10 21:51:44,930] devvm/INFO/locust.runners: All users spawned: {"WebsiteUser": 700} (700 total users)
+[2026-10-10 21:53:01,049] devvm/INFO/locust.runners: Ramping to 800 users at a rate of 1.00 per second
+[2026-10-10 21:54:40,182] devvm/INFO/locust.runners: All users spawned: {"WebsiteUser": 800} (800 total users)
